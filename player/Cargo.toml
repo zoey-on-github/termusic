@@ -22,26 +22,35 @@ doctest = false
 termusic-lib.workspace = true # {path = "../lib/"}
 termusic-audio.workspace = true # {path = "../lib/"}
 # anyhow.workspace = true 
-# cpal.workspace = true
 # discord-rich-presence.workspace = true
 # glib = { version="0.17", optional = true }
 # gstreamer = { version="0.20", optional = true}
-# lazy_static.workspace = true
 # libmpv-sys  = { version = "3", optional = true }
-# log.workspace = true # = "0.4"
 # lovely_env_logger.workspace = true # = "0.6"
 # pathdiff.workspace = true #  = { version = "0.2", features = ["camino"] }
-# rand.workspace = true #  = "0.8"
 # reqwest.workspace = true
 # serde.workspace = true
 # souvlaki.workspace = true
-# symphonia.workspace = true #  = { version = "0.5.1",  features = ["aac","mp3","isomp4","alac"]}
-# tokio.workspace = true
-# ureq.workspace = true #   = "2"
 # tonic.workspace = true
 # prost.workspace = true
-async-trait.workspace = true
-parking_lot.workspace = true
+
+cpal.workspace = true
+futures-util.workspace  = true
+lazy_static.workspace  = true
+librespot-protocol.workspace  = true
+log.workspace  = true
+parking_lot.workspace  = true
+rand.workspace  = true
+rand_distr.workspace  = true
+rb.workspace  = true
+rodio.workspace   = true
+symphonia.workspace  = true
+thiserror.workspace  = true
+tokio.workspace  = true
+zerocopy.workspace  = true
+owo-colors.workspace  = true
+async-trait.workspace  = true
+url.workspace  = true
 
 [features]
 default = []
