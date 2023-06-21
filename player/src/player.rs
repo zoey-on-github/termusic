@@ -1,8 +1,6 @@
+use crate::tracklist::{PlaybackState, Tracklist};
 use async_trait::async_trait;
 use futures_util::{future::FusedFuture, Future};
-use music_player_audio::fetch::{AudioFile, Subfile};
-use music_player_entity::track::Model as Track;
-use music_player_tracklist::{PlaybackState, Tracklist};
 use parking_lot::Mutex;
 use std::{
     collections::HashMap,
@@ -17,6 +15,8 @@ use std::{
     time::Duration,
 };
 use symphonia::core::{errors::Error, io::MediaSourceStream, probe::Hint};
+use termusic_audio::fetch::{AudioFile, Subfile};
+use termusiclib::track::Track;
 use tokio::{
     runtime::{Handle, Runtime},
     sync::mpsc::{self, UnboundedReceiver},
@@ -543,21 +543,21 @@ impl PlayerInternal {
     fn handle_next(&mut self) {
         if self.tracklist.lock().unwrap().next_track().is_some() {
             let (current_track, _) = self.tracklist.lock().unwrap().current_track();
-            self.handle_command_load(&current_track.unwrap().uri);
+            self.handle_command_load(&current_track.unwrap().file().unwrap());
         }
     }
 
     fn handle_previous(&mut self) {
         if self.tracklist.lock().unwrap().previous_track().is_some() {
             let (current_track, _) = self.tracklist.lock().unwrap().current_track();
-            self.handle_command_load(&current_track.unwrap().uri);
+            self.handle_command_load(&current_track.unwrap().file().unwrap());
         }
     }
 
     fn handle_play_track_at(&mut self, index: usize) {
         let (current_track, _) = self.tracklist.lock().unwrap().play_track_at(index);
         if current_track.is_some() {
-            self.handle_command_load(&current_track.unwrap().uri);
+            self.handle_command_load(&current_track.unwrap().file().unwrap());
         }
     }
 

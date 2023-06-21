@@ -6,6 +6,7 @@ pub mod dither;
 pub mod formatter;
 pub mod metadata;
 pub mod player;
+pub mod tracklist;
 
 #[macro_use]
 extern crate log;

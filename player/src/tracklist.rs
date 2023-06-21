@@ -91,8 +91,8 @@ impl Tracklist {
     }
 
     pub fn remove_track(&mut self, track: Track) {
-        self.tracks.retain(|t| t.id != track.id);
-        self.played.retain(|t| t.id != track.id);
+        self.tracks.retain(|t| *t != track);
+        self.played.retain(|t| *t != track);
     }
 
     pub fn remove_track_at(&mut self, index: usize) {
