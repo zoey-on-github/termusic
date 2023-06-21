@@ -6,7 +6,7 @@ use std::sync::Arc;
 use termusiclib::config::Settings;
 use termusicplayer::audio_backend::rodio::RodioSink;
 use termusicplayer::config::AudioFormat;
-use termusicplayer::player::{Player, PlayerCommand};
+use termusicplayer::player::{Player, PlayerCommand, PlayerEngine};
 use termusicplayer::player_service::music_player_server::MusicPlayerServer;
 use termusicplayer::tracklist::Tracklist;
 use tonic::transport::Server;
@@ -35,13 +35,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let tracklist = Arc::new(Mutex::new(Tracklist::new_empty()));
     // let db = Database::new().await;
 
-    let (_, _) = Player::new(
+    let (mut player, _) = Player::new(
         move || backend(None, audio_format),
         |_| {},
         cmd_tx.clone(),
         cmd_rx.clone(),
         tracklist.clone(),
     );
+
+    let song = "/home/tramhao/Music/mp3/test/assets/a.mp3";
+    player.load(song, true, 0);
+    player.await_end_of_track().await;
     // let player_handle = tokio::task::spawn_blocking(move || -> Result<()> {
     //     let mut player = GeneralPlayer::new(&config, cmd_tx.clone(), cmd_rx.clone());
     //     loop {
