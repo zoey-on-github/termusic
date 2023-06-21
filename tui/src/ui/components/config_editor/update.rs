@@ -146,7 +146,7 @@ impl Model {
                     Ok(()) => {
                         match self.config.save() {
                             Ok(()) => {
-                                self.command(&PlayerCmd::ReloadConfig);
+                                // self.command(&PlayerCmd::ReloadConfig);
                             }
                             Err(e) => {
                                 self.mount_error_popup(format!("error when saving config: {e}"));

@@ -31,6 +31,7 @@ use termusiclib::types::{Id, Msg, SearchLyricState, YoutubeOptions};
 #[cfg(feature = "cover")]
 use termusiclib::ueberzug::UeInstance;
 use termusiclib::{config::Settings, track::Track};
+use termusicplayer::player::PlayerCommand;
 
 use std::path::PathBuf;
 use std::sync::mpsc::{self, Receiver, Sender};
@@ -108,7 +109,7 @@ pub struct Model {
     pub rx_to_main: Receiver<Msg>,
     pub podcast_search_vec: Option<Vec<PodcastFeed>>,
     pub playlist: Playlist,
-    pub cmd_tx: UnboundedSender<PlayerCmd>,
+    pub cmd_tx: UnboundedSender<PlayerCommand>,
 }
 
 #[derive(Debug)]
@@ -120,7 +121,7 @@ pub enum ViuerSupported {
 }
 
 impl Model {
-    pub fn new(config: &Settings, cmd_tx: UnboundedSender<PlayerCmd>) -> Self {
+    pub fn new(config: &Settings, cmd_tx: UnboundedSender<PlayerCommand>) -> Self {
         let path = Self::get_full_path_from_config(config);
         let tree = Tree::new(Self::library_dir_tree(&path, config.max_depth_cli));
 
@@ -246,14 +247,14 @@ impl Model {
     }
 
     pub fn run(&mut self) {
-        self.command(&PlayerCmd::GetProgress);
+        // self.command(&PlayerCmd::GetProgress);
         self.progress_update_title();
         self.lyric_update_title();
     }
 
     pub fn player_sync_playlist(&mut self) -> Result<()> {
         self.playlist.save()?;
-        self.command(&PlayerCmd::ReloadPlaylist);
+        // self.command(&PlayerCmd::ReloadPlaylist);
         Ok(())
     }
 
@@ -272,15 +273,15 @@ impl Model {
             return;
         }
 
-        self.command(&PlayerCmd::TogglePause);
+        // self.command(&PlayerCmd::TogglePause);
         // self.progress_update_title();
     }
 
     pub fn player_previous(&mut self) {
-        self.command(&PlayerCmd::SkipPrevious);
+        // self.command(&PlayerCmd::SkipPrevious);
     }
 
-    pub fn command(&mut self, cmd: &PlayerCmd) {
+    pub fn command(&mut self, cmd: &PlayerCommand) {
         if let Err(e) = self.cmd_tx.send(cmd.clone()) {
             self.mount_error_popup(format!("error in {cmd:?}: {e}"));
         }

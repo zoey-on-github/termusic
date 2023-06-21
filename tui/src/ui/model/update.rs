@@ -411,25 +411,25 @@ impl Model {
                 self.player_toggle_pause();
             }
             Msg::PlayerSeekForward => {
-                self.command(&PlayerCmd::SeekForward);
+                // self.command(&PlayerCmd::SeekForward);
             }
             Msg::PlayerSeekBackward => {
-                self.command(&PlayerCmd::SeekBackward);
+                // self.command(&PlayerCmd::SeekBackward);
             }
             Msg::PlayerSpeedUp => {
-                self.command(&PlayerCmd::SpeedUp);
+                // self.command(&PlayerCmd::SpeedUp);
             }
             Msg::PlayerSpeedDown => {
-                self.command(&PlayerCmd::SpeedDown);
+                // self.command(&PlayerCmd::SpeedDown);
             }
             Msg::PlayerVolumeUp => {
-                self.command(&PlayerCmd::VolumeUp);
+                // self.command(&PlayerCmd::VolumeUp);
             }
             Msg::PlayerVolumeDown => {
-                self.command(&PlayerCmd::VolumeDown);
+                // self.command(&PlayerCmd::VolumeDown);
             }
             Msg::PlayerToggleGapless => {
-                self.command(&PlayerCmd::ToggleGapless);
+                // self.command(&PlayerCmd::ToggleGapless);
             }
             _ => {}
         }
@@ -767,7 +767,7 @@ impl Model {
                 self.playlist_play_selected(*index);
             }
             PLMsg::LoopModeCycle => {
-                self.command(&PlayerCmd::CycleLoop);
+                // self.command(&PlayerCmd::CycleLoop);
                 self.config.player_loop_mode = self.playlist.cycle_loop_mode();
                 self.playlist_update_title();
             }
@@ -782,7 +782,7 @@ impl Model {
                 TermusicLayout::Podcast => assert!(self.app.active(&Id::Lyric).is_ok()),
             },
             PLMsg::NextSong => {
-                self.command(&PlayerCmd::SkipNext);
+                // self.command(&PlayerCmd::SkipNext);
             }
 
             PLMsg::PrevSong => {

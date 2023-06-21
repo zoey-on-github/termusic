@@ -32,7 +32,8 @@ use std::time::Duration;
 use sysinfo::{ProcessExt, System, SystemExt};
 use termusiclib::config::Settings;
 pub use termusiclib::types::*;
-use termusicplayback::{PlayerCmd, Status};
+// use termusicplayback::{PlayerCmd, Status};
+use termusicplayer::player::PlayerCommand;
 use tokio::sync::mpsc::{self, UnboundedReceiver};
 use tuirealm::application::PollStrategy;
 use tuirealm::{Application, Update};
@@ -46,7 +47,7 @@ const FORCED_REDRAW_INTERVAL: Duration = Duration::from_millis(1000);
 pub struct UI {
     model: Model,
     playback: Playback,
-    cmd_rx: UnboundedReceiver<PlayerCmd>,
+    cmd_rx: UnboundedReceiver<PlayerCommand>,
 }
 
 impl UI {
@@ -88,7 +89,7 @@ impl UI {
             if progress_interval == 0 {
                 self.model.run();
             }
-            self.run_playback().await?;
+            // self.run_playback().await?;
             progress_interval += 1;
             if progress_interval >= 80 {
                 progress_interval = 0;
@@ -161,112 +162,112 @@ impl UI {
         }
     }
 
-    fn handle_status(&mut self, status: Status) {
-        match status {
-            Status::Running => match self.model.playlist.status() {
-                Status::Running => {}
-                Status::Stopped => {
-                    self.model.playlist.set_status(status);
-                    // This is to show the first album photo
-                    self.model.player_update_current_track_after();
-                }
-                Status::Paused => {
-                    self.model.playlist.set_status(status);
-                }
-            },
-            Status::Stopped => match self.model.playlist.status() {
-                Status::Running | Status::Paused => {
-                    self.model.playlist.set_status(status);
-                    // This is to clear the photo shown when stopped
-                    if self.model.playlist.is_empty() {
-                        self.model.player_update_current_track_after();
-                    }
-                }
-                Status::Stopped => {}
-            },
-            Status::Paused => match self.model.playlist.status() {
-                Status::Running | Status::Stopped => {
-                    self.model.playlist.set_status(status);
-                }
-                Status::Paused => {}
-            },
-        }
-    }
+    // fn handle_status(&mut self, status: Status) {
+    //     match status {
+    //         Status::Running => match self.model.playlist.status() {
+    //             Status::Running => {}
+    //             Status::Stopped => {
+    //                 self.model.playlist.set_status(status);
+    //                 // This is to show the first album photo
+    //                 self.model.player_update_current_track_after();
+    //             }
+    //             Status::Paused => {
+    //                 self.model.playlist.set_status(status);
+    //             }
+    //         },
+    //         Status::Stopped => match self.model.playlist.status() {
+    //             Status::Running | Status::Paused => {
+    //                 self.model.playlist.set_status(status);
+    //                 // This is to clear the photo shown when stopped
+    //                 if self.model.playlist.is_empty() {
+    //                     self.model.player_update_current_track_after();
+    //                 }
+    //             }
+    //             Status::Stopped => {}
+    //         },
+    //         Status::Paused => match self.model.playlist.status() {
+    //             Status::Running | Status::Stopped => {
+    //                 self.model.playlist.set_status(status);
+    //             }
+    //             Status::Paused => {}
+    //         },
+    //     }
+    // }
 
-    async fn run_playback(&mut self) -> Result<()> {
-        if let Ok(cmd) = self.cmd_rx.try_recv() {
-            match cmd {
-                PlayerCmd::TogglePause => {
-                    let status = self.playback.toggle_pause().await?;
-                    self.model.playlist.set_status(status);
-                    self.model.progress_update_title();
-                }
-                PlayerCmd::SkipNext => {
-                    self.playback.skip_next().await?;
-                    self.model.playlist.clear_current_track();
-                }
-                PlayerCmd::GetProgress => {
-                    let response = self.playback.get_progress().await?;
-                    self.model.progress_update(
-                        i64::from(response.position),
-                        i64::from(response.duration),
-                    );
-                    self.handle_current_track_index(Some(response.current_track_index as usize));
-                    self.handle_status(Status::from_u32(response.status));
-                }
-                PlayerCmd::AboutToFinish
-                | PlayerCmd::Eos
-                | PlayerCmd::ProcessID
-                | PlayerCmd::Tick => {}
+    // async fn run_playback(&mut self) -> Result<()> {
+    //     if let Ok(cmd) = self.cmd_rx.try_recv() {
+    //         match cmd {
+    //             PlayerCmd::TogglePause => {
+    //                 let status = self.playback.toggle_pause().await?;
+    //                 self.model.playlist.set_status(status);
+    //                 self.model.progress_update_title();
+    //             }
+    //             PlayerCmd::SkipNext => {
+    //                 self.playback.skip_next().await?;
+    //                 self.model.playlist.clear_current_track();
+    //             }
+    //             PlayerCmd::GetProgress => {
+    //                 let response = self.playback.get_progress().await?;
+    //                 self.model.progress_update(
+    //                     i64::from(response.position),
+    //                     i64::from(response.duration),
+    //                 );
+    //                 self.handle_current_track_index(Some(response.current_track_index as usize));
+    //                 self.handle_status(Status::from_u32(response.status));
+    //             }
+    //             PlayerCmd::AboutToFinish
+    //             | PlayerCmd::Eos
+    //             | PlayerCmd::ProcessID
+    //             | PlayerCmd::Tick => {}
 
-                #[cfg(not(any(feature = "mpv", feature = "gst")))]
-                PlayerCmd::DurationNext(_) => {}
-                PlayerCmd::CycleLoop => self.playback.cycle_loop().await?,
-                PlayerCmd::PlaySelected => {
-                    self.playback.play_selected().await?;
-                    self.model.playlist.clear_current_track();
-                    // This line is required to show current playing message
-                    self.model.playlist.set_current_track_index(None);
-                }
-                PlayerCmd::SkipPrevious => self.playback.skip_previous().await?,
-                PlayerCmd::ReloadConfig => self.playback.reload_config().await?,
-                PlayerCmd::ReloadPlaylist => self.playback.reload_playlist().await?,
-                PlayerCmd::SeekBackward => {
-                    let (position, duration) = self.playback.seek_backward().await?;
-                    self.model
-                        .progress_update(i64::from(position), i64::from(duration));
-                    self.model.force_redraw();
-                }
-                PlayerCmd::SeekForward => {
-                    let (position, duration) = self.playback.seek_forward().await?;
-                    self.model
-                        .progress_update(i64::from(position), i64::from(duration));
-                    self.model.force_redraw();
-                }
-                PlayerCmd::SpeedDown => {
-                    self.model.config.player_speed = self.playback.speed_down().await?;
-                    self.model.progress_update_title();
-                }
-                PlayerCmd::SpeedUp => {
-                    self.model.config.player_speed = self.playback.speed_up().await?;
-                    self.model.progress_update_title();
-                }
-                PlayerCmd::ToggleGapless => {
-                    self.model.config.player_gapless = self.playback.toggle_gapless().await?;
-                    self.model.progress_update_title();
-                }
-                PlayerCmd::VolumeDown => {
-                    let volume = self.playback.volume_down().await?;
-                    self.model.config.player_volume = volume;
-                    self.model.progress_update_title();
-                }
-                PlayerCmd::VolumeUp => {
-                    let volume = self.playback.volume_up().await?;
-                    self.model.config.player_volume = volume;
-                    self.model.progress_update_title();
-                }
-            }
-        }
-        Ok(())
-    }
+    //             #[cfg(not(any(feature = "mpv", feature = "gst")))]
+    //             PlayerCmd::DurationNext(_) => {}
+    //             PlayerCmd::CycleLoop => self.playback.cycle_loop().await?,
+    //             PlayerCmd::PlaySelected => {
+    //                 self.playback.play_selected().await?;
+    //                 self.model.playlist.clear_current_track();
+    //                 // This line is required to show current playing message
+    //                 self.model.playlist.set_current_track_index(None);
+    //             }
+    //             PlayerCmd::SkipPrevious => self.playback.skip_previous().await?,
+    //             PlayerCmd::ReloadConfig => self.playback.reload_config().await?,
+    //             PlayerCmd::ReloadPlaylist => self.playback.reload_playlist().await?,
+    //             PlayerCmd::SeekBackward => {
+    //                 let (position, duration) = self.playback.seek_backward().await?;
+    //                 self.model
+    //                     .progress_update(i64::from(position), i64::from(duration));
+    //                 self.model.force_redraw();
+    //             }
+    //             PlayerCmd::SeekForward => {
+    //                 let (position, duration) = self.playback.seek_forward().await?;
+    //                 self.model
+    //                     .progress_update(i64::from(position), i64::from(duration));
+    //                 self.model.force_redraw();
+    //             }
+    //             PlayerCmd::SpeedDown => {
+    //                 self.model.config.player_speed = self.playback.speed_down().await?;
+    //                 self.model.progress_update_title();
+    //             }
+    //             PlayerCmd::SpeedUp => {
+    //                 self.model.config.player_speed = self.playback.speed_up().await?;
+    //                 self.model.progress_update_title();
+    //             }
+    //             PlayerCmd::ToggleGapless => {
+    //                 self.model.config.player_gapless = self.playback.toggle_gapless().await?;
+    //                 self.model.progress_update_title();
+    //             }
+    //             PlayerCmd::VolumeDown => {
+    //                 let volume = self.playback.volume_down().await?;
+    //                 self.model.config.player_volume = volume;
+    //                 self.model.progress_update_title();
+    //             }
+    //             PlayerCmd::VolumeUp => {
+    //                 let volume = self.playback.volume_up().await?;
+    //                 self.model.config.player_volume = volume;
+    //                 self.model.progress_update_title();
+    //             }
+    //         }
+    //     }
+    //     Ok(())
+    // }
 }

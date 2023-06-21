@@ -501,7 +501,7 @@ impl Model {
         if let Err(e) = self.player_sync_playlist() {
             self.mount_error_popup(format!("sync playlist error: {e}"));
         }
-        self.command(&PlayerCmd::PlaySelected);
+        // self.command(&PlayerCmd::PlaySelected);
     }
 
     pub fn playlist_update_search(&mut self, input: &str) {

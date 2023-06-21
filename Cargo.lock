@@ -3600,6 +3600,7 @@ dependencies = [
  "sysinfo",
  "termusic-lib",
  "termusic-playback",
+ "termusic-player",
  "textwrap 0.16.0",
  "tokio",
  "tonic",
