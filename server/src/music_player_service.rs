@@ -1,15 +1,15 @@
 use anyhow::Result;
 use parking_lot::Mutex;
 use std::sync::Arc;
-use termusicplayback::player::music_player_server::MusicPlayer;
-use termusicplayback::player::{
+use termusicplayer::music_player_server::MusicPlayer;
+use termusicplayer::player::PlayerCommand;
+use termusicplayer::{
     CycleLoopReply, CycleLoopRequest, EmptyReply, GetProgressRequest, GetProgressResponse,
     PlaySelectedRequest, ReloadConfigRequest, ReloadPlaylistRequest, SeekBackwardRequest,
     SeekForwardRequest, SeekReply, SkipNextRequest, SkipNextResponse, SkipPreviousRequest,
     SpeedDownRequest, SpeedReply, SpeedUpRequest, ToggleGaplessReply, ToggleGaplessRequest,
     TogglePauseRequest, TogglePauseResponse, VolumeDownRequest, VolumeReply, VolumeUpRequest,
 };
-use termusicplayback::PlayerCmd;
 use tokio::sync::mpsc::UnboundedSender;
 use tonic::{Request, Response, Status};
 

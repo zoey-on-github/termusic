@@ -51,6 +51,8 @@ zerocopy.workspace  = true
 owo-colors.workspace  = true
 async-trait.workspace  = true
 url.workspace  = true
+tonic.workspace = true
+prost.workspace = true
 
 [features]
 default = []

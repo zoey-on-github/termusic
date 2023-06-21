@@ -17,7 +17,8 @@ path = "src/server.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
 termusic-lib.workspace = true # = {path = "../lib/"}
-termusic-playback.workspace = true # = {path = "playback/"}
+# termusic-playback.workspace = true # = {path = "playback/"}
+termusic-player.workspace = true
 anyhow.workspace = true 
 lazy_static.workspace = true
 log.workspace = true 

@@ -8,6 +8,10 @@ pub mod metadata;
 pub mod player;
 pub mod tracklist;
 
+pub mod player_service {
+    tonic::include_proto!("player_service");
+}
+
 #[macro_use]
 extern crate log;
 
