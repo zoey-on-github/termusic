@@ -4,8 +4,11 @@ use music_player_service::MusicPlayerService;
 use parking_lot::Mutex;
 use std::sync::Arc;
 use termusiclib::config::Settings;
-use termusicplayback::player::music_player_server::MusicPlayerServer;
-use termusicplayback::{GeneralPlayer, PlayerCmd, PlayerTrait, Status};
+use termusicplayer::audio_backend::rodio::RodioSink;
+use termusicplayer::config::AudioFormat;
+use termusicplayer::player::{Player, PlayerCommand};
+use termusicplayer::player_service::music_player_server::MusicPlayerServer;
+use termusicplayer::tracklist::Tracklist;
 use tonic::transport::Server;
 
 #[macro_use]
@@ -16,6 +19,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     lovely_env_logger::init_default();
     info!("background thread start");
 
+    let audio_format = AudioFormat::default();
+    let backend = termusicplayer::audio_backend::find(Some(RodioSink::NAME.to_string())).unwrap();
     let (cmd_tx, cmd_rx) = tokio::sync::mpsc::unbounded_channel();
     let cmd_tx = Arc::new(Mutex::new(cmd_tx));
     let cmd_rx = Arc::new(Mutex::new(cmd_rx));
@@ -27,6 +32,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let addr = format!("[::1]:{}", config.player_port).parse()?;
 
+    let tracklist = Arc::new(Mutex::new(Tracklist::new_empty()));
+    // let db = Database::new().await;
+
+    let (_, _) = Player::new(
+        move || backend(None, audio_format),
+        |_| {},
+        cmd_tx.clone(),
+        cmd_rx.clone(),
+        tracklist.clone(),
+    );
     // let player_handle = tokio::task::spawn_blocking(move || -> Result<()> {
     //     let mut player = GeneralPlayer::new(&config, cmd_tx.clone(), cmd_rx.clone());
     //     loop {
