@@ -3616,6 +3616,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "termusic-player"
+version = "0.7.11"
+dependencies = [
+ "async-trait",
+ "parking_lot",
+ "pretty_assertions",
+ "termusic-audio",
+ "termusic-lib",
+ "tonic-build",
+]
+
+[[package]]
 name = "termusic-server"
 version = "0.7.11"
 dependencies = [

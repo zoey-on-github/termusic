@@ -3,6 +3,7 @@ members = [
     "audio",
     "lib",
     "playback",
+    "player",
     "server",
     "tui",
 ]
