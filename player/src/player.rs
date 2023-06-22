@@ -16,6 +16,7 @@ use std::{
 };
 use symphonia::core::{errors::Error, io::MediaSourceStream, probe::Hint};
 use termusic_audio::fetch::{AudioFile, Subfile};
+use termusiclib::config::Settings;
 use termusiclib::track::Track;
 use tokio::{
     runtime::{Handle, Runtime},
@@ -28,6 +29,7 @@ use crate::{
     decoder::{symphonia_decoder::SymphoniaDecoder, AudioDecoder},
     dither::{mk_ditherer, TriangularDitherer},
     formatter,
+    playlist::Playlist,
 };
 
 const PRELOAD_NEXT_TRACK_BEFORE_END: u64 = 30000;
@@ -66,6 +68,8 @@ pub trait PlayerEngine: Send + Sync {
 #[derive(Clone)]
 pub struct Player {
     commands: Option<Arc<Mutex<mpsc::UnboundedSender<PlayerCommand>>>>,
+    playlist: Playlist,
+    config: Settings,
 }
 
 impl Player {
@@ -75,6 +79,7 @@ impl Player {
         cmd_tx: Arc<Mutex<mpsc::UnboundedSender<PlayerCommand>>>,
         cmd_rx: Arc<Mutex<mpsc::UnboundedReceiver<PlayerCommand>>>,
         tracklist: Arc<Mutex<Tracklist>>,
+        config: &Settings,
     ) -> (Player, PlayerEventChannel)
     where
         F: FnOnce() -> Box<dyn Sink> + Send + 'static,
@@ -82,6 +87,7 @@ impl Player {
     {
         let (event_sender, event_receiver) = mpsc::unbounded_channel();
 
+        let playlist = Playlist::new(config).unwrap_or_default();
         thread::spawn(move || {
             let internal = PlayerInternal {
                 commands: cmd_rx,
@@ -101,6 +107,8 @@ impl Player {
         (
             Player {
                 commands: Some(cmd_tx),
+                playlist,
+                config: config.clone(),
             },
             event_receiver,
         )
@@ -118,6 +126,14 @@ impl Player {
         let (event_sender, event_receiver) = mpsc::unbounded_channel();
         self.command(PlayerCommand::AddEventSender(event_sender));
         event_receiver
+    }
+
+    pub fn start_play(&mut self) {
+        if let Some(current_track) = self.playlist.get_current_track() {
+            self.command(PlayerCommand::Load {
+                track_id: current_track,
+            });
+        }
     }
 
     pub async fn await_end_of_track(&self) {

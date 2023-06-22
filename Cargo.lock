@@ -3730,6 +3730,7 @@ dependencies = [
 name = "termusic-player"
 version = "0.7.11"
 dependencies = [
+ "anyhow",
  "async-trait",
  "cpal",
  "futures-util",
@@ -3738,12 +3739,14 @@ dependencies = [
  "log",
  "owo-colors",
  "parking_lot",
+ "pathdiff",
  "pretty_assertions",
  "prost",
  "rand",
  "rand_distr",
  "rb",
  "rodio",
+ "serde",
  "symphonia",
  "termusic-audio",
  "termusic-lib",

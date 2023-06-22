@@ -21,15 +21,15 @@ doctest = false
 [dependencies]
 termusic-lib.workspace = true # {path = "../lib/"}
 termusic-audio.workspace = true # {path = "../lib/"}
-# anyhow.workspace = true 
+anyhow.workspace = true 
 # discord-rich-presence.workspace = true
 # glib = { version="0.17", optional = true }
 # gstreamer = { version="0.20", optional = true}
 # libmpv-sys  = { version = "3", optional = true }
 # lovely_env_logger.workspace = true # = "0.6"
-# pathdiff.workspace = true #  = { version = "0.2", features = ["camino"] }
+pathdiff.workspace = true #  = { version = "0.2", features = ["camino"] }
 # reqwest.workspace = true
-# serde.workspace = true
+serde.workspace = true
 # souvlaki.workspace = true
 # tonic.workspace = true
 # prost.workspace = true

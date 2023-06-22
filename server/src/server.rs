@@ -41,11 +41,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         cmd_tx.clone(),
         cmd_rx.clone(),
         tracklist.clone(),
+        &config,
     );
 
-    let song = "/home/tramhao/Music/mp3/test/assets/a.mp3";
-    player.load(song, true, 0);
-    player.await_end_of_track().await;
+    player.start_play();
+    // let song = "/home/tramhao/Music/mp3/test/assets/a.mp3";
+    // player.load(song, true, 0);
+    // player.await_end_of_track().await;
     // let player_handle = tokio::task::spawn_blocking(move || -> Result<()> {
     //     let mut player = GeneralPlayer::new(&config, cmd_tx.clone(), cmd_rx.clone());
     //     loop {

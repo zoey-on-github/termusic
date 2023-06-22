@@ -6,6 +6,7 @@ pub mod dither;
 pub mod formatter;
 pub mod metadata;
 pub mod player;
+pub mod playlist;
 pub mod tracklist;
 
 pub mod player_service {
