@@ -6,7 +6,7 @@ use std::sync::Arc;
 use termusiclib::config::Settings;
 use termusicplayer::audio_backend::rodio::RodioSink;
 use termusicplayer::config::AudioFormat;
-use termusicplayer::player::{Player, PlayerCommand, PlayerEngine};
+use termusicplayer::player::{Player, PlayerCommand, PlayerEngine, PlayerEvent};
 use termusicplayer::player_service::music_player_server::MusicPlayerServer;
 use termusicplayer::tracklist::Tracklist;
 use tonic::transport::Server;
@@ -35,7 +35,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let tracklist = Arc::new(Mutex::new(Tracklist::new_empty()));
     // let db = Database::new().await;
 
-    let (mut player, _) = Player::new(
+    let (mut player, mut player_event) = Player::new(
         move || backend(None, audio_format),
         |_| {},
         cmd_tx.clone(),
@@ -45,6 +45,41 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     player.start_play();
+
+    std::thread::spawn(move || {
+        let mut quit = false;
+        while !quit {
+            if let Ok(event) = player_event.try_recv() {
+                match event {
+                    PlayerEvent::Stopped => quit = true,
+                    PlayerEvent::Started => {}
+                    PlayerEvent::Loading => {}
+                    PlayerEvent::Preloading => {}
+                    PlayerEvent::Playing => {}
+                    PlayerEvent::Paused => {}
+                    PlayerEvent::TimeToPreloadNextTrack => {}
+                    PlayerEvent::EndOfTrack { is_last_track } => {
+                        if is_last_track {
+                            player.playlist.next();
+                        }
+                        player.start_play();
+                    }
+                    PlayerEvent::VolumeSet { volume } => {}
+                    PlayerEvent::Error { track_id, error } => {}
+                    PlayerEvent::TracklistUpdated { tracks } => {}
+                    PlayerEvent::CurrentTrack {
+                        track,
+                        position,
+                        position_ms,
+                        is_playing,
+                    } => {}
+                    PlayerEvent::TrackTimePosition { position_ms } => {}
+                }
+            }
+            std::thread::sleep(std::time::Duration::from_millis(10));
+        }
+    });
+
     // let song = "/home/tramhao/Music/mp3/test/assets/a.mp3";
     // player.load(song, true, 0);
     // player.await_end_of_track().await;
@@ -204,12 +239,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     //     }
     // });
 
+    // let _drop = player_handle.await?;
+
     Server::builder()
         .add_service(MusicPlayerServer::new(music_player_service))
         .serve(addr)
         .await?;
-
-    // let _drop = player_handle.await?;
 
     Ok(())
 }

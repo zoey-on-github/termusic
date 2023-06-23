@@ -68,7 +68,7 @@ pub trait PlayerEngine: Send + Sync {
 #[derive(Clone)]
 pub struct Player {
     commands: Option<Arc<Mutex<mpsc::UnboundedSender<PlayerCommand>>>>,
-    playlist: Playlist,
+    pub playlist: Playlist,
     config: Settings,
 }
 
