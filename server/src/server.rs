@@ -50,14 +50,36 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     player.start_play();
 
     let cmd_tx_tick = cmd_tx_external.clone();
-    std::thread::spawn(move || loop {
-        let tx = cmd_tx_tick.lock();
-        tx.send(PlayerExternalCmd::Tick).ok();
-        // This drop is important to unlock the mutex
-        drop(tx);
-        std::thread::sleep(std::time::Duration::from_millis(500));
+    std::thread::spawn(move || -> Result<()> {
+        loop {
+            {
+                let tx = cmd_tx_tick.lock();
+                tx.send(PlayerExternalCmd::Tick)?;
+            }
+            // debug!("tick generated");
+            // This drop is important to unlock the mutex
+            // drop(tx);
+            std::thread::sleep(std::time::Duration::from_millis(500));
+        }
+        Ok(())
     });
 
+    std::thread::spawn(move || loop {
+        std::thread::sleep(std::time::Duration::from_secs(10));
+        let deadlocks = parking_lot::deadlock::check_deadlock();
+        if deadlocks.is_empty() {
+            continue;
+        }
+
+        println!("{} deadlocks detected", deadlocks.len());
+        for (i, threads) in deadlocks.iter().enumerate() {
+            println!("Deadlock #{}", i);
+            for t in threads {
+                println!("Thread Id {:#?}", t.thread_id());
+                println!("{:#?}", t.backtrace());
+            }
+        }
+    });
     std::thread::spawn(move || {
         let mut quit = false;
         while !quit {
@@ -94,7 +116,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 // p_tick.volume = player.volume();
                                 // p_tick.speed = player.speed();
                                 // p_tick.gapless = player.config.player_gapless;
-                                // info!("p_tick: {:?}", p_tick);
+                                //FIXME: why the position update stop at 31 seconds everytime?
+                                info!("p_tick: {:?}", p_tick);
+                                info!("position: {}", position);
                             }
                         };
                         let runtime =

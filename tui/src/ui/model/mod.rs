@@ -249,7 +249,7 @@ impl Model {
     }
 
     pub fn run(&mut self) {
-        // self.command(&PlayerCmd::GetProgress);
+        self.command(&PlayerExternalCmd::GetProgress);
         self.progress_update_title();
         self.lyric_update_title();
     }
