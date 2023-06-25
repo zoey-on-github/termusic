@@ -7,7 +7,8 @@ use termusiclib::track::MediaType;
 use termusiclib::types::{
     DBMsg, DLMsg, GSMsg, Id, IdTagEditor, LIMsg, LyricMsg, Msg, PCMsg, PLMsg, XYWHMsg, YSMsg,
 };
-use termusicplayback::PlayerCmd;
+// use termusicplayback::PlayerCmd;
+use termusicplayer::player::PlayerExternalCmd;
 /**
  * MIT License
  *

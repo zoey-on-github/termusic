@@ -29,7 +29,7 @@ use crate::{
     decoder::{symphonia_decoder::SymphoniaDecoder, AudioDecoder},
     dither::{mk_ditherer, TriangularDitherer},
     formatter,
-    playlist::Playlist,
+    playlist::{Playlist, Status},
 };
 
 const PRELOAD_NEXT_TRACK_BEFORE_END: u64 = 30000;
@@ -129,6 +129,9 @@ impl Player {
     }
 
     pub fn start_play(&mut self) {
+        if self.playlist.is_stopped() | self.playlist.is_paused() {
+            self.playlist.set_status(Status::Running);
+        }
         if let Some(current_track) = self.playlist.get_current_track() {
             self.command(PlayerCommand::Load {
                 track_id: current_track,
@@ -136,6 +139,33 @@ impl Player {
         }
     }
 
+    pub fn toggle_pause(&mut self) {
+        match self.playlist.status() {
+            Status::Running => {
+                // self.player.pause();
+                self.command(PlayerCommand::Pause);
+                if self.config.player_use_mpris {
+                    // self.mpris.pause();
+                }
+                if self.config.player_use_discord {
+                    // self.discord.pause();
+                }
+                self.playlist.set_status(Status::Paused);
+            }
+            Status::Stopped => {}
+            Status::Paused => {
+                self.command(PlayerCommand::Play);
+                if self.config.player_use_mpris {
+                    // self.mpris.resume();
+                }
+                if self.config.player_use_discord {
+                    // let time_pos = self.player.position.lock();
+                    // self.discord.resume(*time_pos);
+                }
+                self.playlist.set_status(Status::Running);
+            }
+        }
+    }
     pub async fn await_end_of_track(&self) {
         let mut channel = self.get_player_event_channel();
         while let Some(event) = channel.recv().await {
@@ -845,3 +875,28 @@ impl PlayerEvent {
 }
 
 pub type PlayerEventChannel = mpsc::UnboundedReceiver<PlayerEvent>;
+
+#[derive(Clone, Debug)]
+pub enum PlayerExternalCmd {
+    AboutToFinish,
+    CycleLoop,
+    #[cfg(not(any(feature = "mpv", feature = "gst")))]
+    DurationNext(u64),
+    Eos,
+    GetProgress,
+    PlaySelected,
+    SkipPrevious,
+    ProcessID,
+    ReloadConfig,
+    ReloadPlaylist,
+    SeekBackward,
+    SeekForward,
+    SkipNext,
+    SpeedDown,
+    SpeedUp,
+    Tick,
+    ToggleGapless,
+    TogglePause,
+    VolumeDown,
+    VolumeUp,
+}

@@ -6,7 +6,7 @@ use std::sync::Arc;
 use termusiclib::config::Settings;
 use termusicplayer::audio_backend::rodio::RodioSink;
 use termusicplayer::config::AudioFormat;
-use termusicplayer::player::{Player, PlayerCommand, PlayerEngine, PlayerEvent};
+use termusicplayer::player::{Player, PlayerEngine, PlayerEvent, PlayerExternalCmd};
 use termusicplayer::player_service::music_player_server::MusicPlayerServer;
 use termusicplayer::tracklist::Tracklist;
 use tonic::transport::Server;
@@ -24,8 +24,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (cmd_tx, cmd_rx) = tokio::sync::mpsc::unbounded_channel();
     let cmd_tx = Arc::new(Mutex::new(cmd_tx));
     let cmd_rx = Arc::new(Mutex::new(cmd_rx));
+    let (cmd_tx_external, cmd_rx_external) = tokio::sync::mpsc::unbounded_channel();
+    let cmd_tx_external = Arc::new(Mutex::new(cmd_tx_external));
+    let cmd_rx_external = Arc::new(Mutex::new(cmd_rx_external));
 
-    let music_player_service: MusicPlayerService = MusicPlayerService::new(cmd_tx.clone());
+    let music_player_service: MusicPlayerService = MusicPlayerService::new(cmd_tx_external.clone());
     let mut config = Settings::default();
     config.load()?;
     let progress_tick = music_player_service.progress.clone();
@@ -49,6 +52,35 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     std::thread::spawn(move || {
         let mut quit = false;
         while !quit {
+            if let Ok(cmd) = cmd_rx_external.lock().try_recv() {
+                match cmd {
+                    PlayerExternalCmd::AboutToFinish => todo!(),
+                    PlayerExternalCmd::CycleLoop => todo!(),
+                    PlayerExternalCmd::DurationNext(_) => todo!(),
+                    PlayerExternalCmd::Eos => todo!(),
+                    PlayerExternalCmd::GetProgress => todo!(),
+                    PlayerExternalCmd::PlaySelected => todo!(),
+                    PlayerExternalCmd::SkipPrevious => todo!(),
+                    PlayerExternalCmd::ProcessID => todo!(),
+                    PlayerExternalCmd::ReloadConfig => todo!(),
+                    PlayerExternalCmd::ReloadPlaylist => todo!(),
+                    PlayerExternalCmd::SeekBackward => todo!(),
+                    PlayerExternalCmd::SeekForward => todo!(),
+                    PlayerExternalCmd::SkipNext => todo!(),
+                    PlayerExternalCmd::SpeedDown => todo!(),
+                    PlayerExternalCmd::SpeedUp => todo!(),
+                    PlayerExternalCmd::Tick => todo!(),
+                    PlayerExternalCmd::ToggleGapless => todo!(),
+                    PlayerExternalCmd::TogglePause => {
+                        info!("player toggled pause");
+                        player.toggle_pause();
+                        let mut p_tick = progress_tick.lock();
+                        p_tick.status = player.playlist.status().as_u32();
+                    }
+                    PlayerExternalCmd::VolumeDown => todo!(),
+                    PlayerExternalCmd::VolumeUp => todo!(),
+                }
+            }
             if let Ok(event) = player_event.try_recv() {
                 match event {
                     PlayerEvent::Stopped => quit = true,

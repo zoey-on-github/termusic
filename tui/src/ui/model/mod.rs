@@ -31,7 +31,6 @@ use termusiclib::types::{Id, Msg, SearchLyricState, YoutubeOptions};
 #[cfg(feature = "cover")]
 use termusiclib::ueberzug::UeInstance;
 use termusiclib::{config::Settings, track::Track};
-use termusicplayer::player::PlayerCommand;
 
 use std::path::PathBuf;
 use std::sync::mpsc::{self, Receiver, Sender};
@@ -44,7 +43,10 @@ use termusiclib::sqlite::TrackForDB;
 use termusiclib::utils::{get_app_config_path, DownloadTracker};
 // use termusicplayback::{GeneralPlayer, PlayerMsg, PlayerTrait};
 use anyhow::Result;
-use termusicplayback::{PlayerCmd, Playlist};
+// use termusicplayback::{PlayerCmd, Playlist};
+use termusicplayer::player::PlayerExternalCmd;
+use termusicplayer::playlist::Playlist;
+
 use tokio::sync::mpsc::UnboundedSender;
 use tui_realm_treeview::Tree;
 use tuirealm::event::NoUserEvent;
@@ -109,7 +111,7 @@ pub struct Model {
     pub rx_to_main: Receiver<Msg>,
     pub podcast_search_vec: Option<Vec<PodcastFeed>>,
     pub playlist: Playlist,
-    pub cmd_tx: UnboundedSender<PlayerCommand>,
+    pub cmd_tx: UnboundedSender<PlayerExternalCmd>,
 }
 
 #[derive(Debug)]
@@ -121,7 +123,7 @@ pub enum ViuerSupported {
 }
 
 impl Model {
-    pub fn new(config: &Settings, cmd_tx: UnboundedSender<PlayerCommand>) -> Self {
+    pub fn new(config: &Settings, cmd_tx: UnboundedSender<PlayerExternalCmd>) -> Self {
         let path = Self::get_full_path_from_config(config);
         let tree = Tree::new(Self::library_dir_tree(&path, config.max_depth_cli));
 
@@ -272,16 +274,15 @@ impl Model {
         if self.playlist.is_empty() && self.playlist.current_track().is_none() {
             return;
         }
-
-        // self.command(&PlayerCmd::TogglePause);
-        // self.progress_update_title();
+        self.command(&PlayerExternalCmd::TogglePause);
+        self.progress_update_title();
     }
 
     pub fn player_previous(&mut self) {
         // self.command(&PlayerCmd::SkipPrevious);
     }
 
-    pub fn command(&mut self, cmd: &PlayerCommand) {
+    pub fn command(&mut self, cmd: &PlayerExternalCmd) {
         if let Err(e) = self.cmd_tx.send(cmd.clone()) {
             self.mount_error_popup(format!("error in {cmd:?}: {e}"));
         }

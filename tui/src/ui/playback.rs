@@ -7,6 +7,7 @@ use termusicplayer::player_service::{
     SkipNextRequest, SkipPreviousRequest, SpeedDownRequest, SpeedUpRequest, ToggleGaplessRequest,
     TogglePauseRequest, VolumeDownRequest, VolumeUpRequest,
 };
+use termusicplayer::playlist::Status;
 use tonic::transport::Channel;
 
 pub struct Playback {
@@ -18,13 +19,13 @@ impl Playback {
         let client = MusicPlayerClient::connect(format!("http://[::1]:{port}")).await?;
         Ok(Self { client })
     }
-    pub async fn toggle_pause(&mut self) -> Result<()> {
+    pub async fn toggle_pause(&mut self) -> Result<Status> {
         let request = tonic::Request::new(TogglePauseRequest {});
         let response = self.client.toggle_pause(request).await?;
         let response = response.into_inner();
-        // let status = Status::from_u32(response.status);
+        let status = Status::from_u32(response.status);
         // info!("Got response from server: {:?}", response);
-        Ok(())
+        Ok(status)
     }
 
     pub async fn skip_next(&mut self) -> Result<()> {

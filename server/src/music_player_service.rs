@@ -1,7 +1,7 @@
 use anyhow::Result;
 use parking_lot::Mutex;
 use std::sync::Arc;
-use termusicplayer::player::PlayerCommand;
+use termusicplayer::player::PlayerExternalCmd;
 use termusicplayer::player_service::music_player_server::MusicPlayer;
 use termusicplayer::player_service::{
     CycleLoopReply, CycleLoopRequest, EmptyReply, GetProgressRequest, GetProgressResponse,
@@ -15,12 +15,12 @@ use tonic::{Request, Response, Status};
 
 #[derive(Debug)]
 pub struct MusicPlayerService {
-    cmd_tx: Arc<Mutex<UnboundedSender<PlayerCommand>>>,
+    cmd_tx: Arc<Mutex<UnboundedSender<PlayerExternalCmd>>>,
     pub progress: Arc<Mutex<GetProgressResponse>>,
 }
 
 impl MusicPlayerService {
-    pub fn new(cmd_tx: Arc<Mutex<UnboundedSender<PlayerCommand>>>) -> Self {
+    pub fn new(cmd_tx: Arc<Mutex<UnboundedSender<PlayerExternalCmd>>>) -> Self {
         let progress = GetProgressResponse {
             position: 0,
             duration: 60,
@@ -37,7 +37,7 @@ impl MusicPlayerService {
 }
 
 impl MusicPlayerService {
-    fn command(&self, cmd: &PlayerCommand) {
+    fn command(&self, cmd: &PlayerExternalCmd) {
         if let Err(e) = self.cmd_tx.lock().send(cmd.clone()) {
             error!("error {cmd:?}: {e}");
         }
@@ -121,7 +121,7 @@ impl MusicPlayer for MusicPlayerService {
         &self,
         _request: Request<TogglePauseRequest>,
     ) -> Result<Response<TogglePauseResponse>, Status> {
-        // self.command(&PlayerCmd::TogglePause);
+        self.command(&PlayerExternalCmd::TogglePause);
         std::thread::sleep(std::time::Duration::from_millis(20));
         let mut reply = TogglePauseResponse { status: 1 };
         let r = self.progress.lock();
