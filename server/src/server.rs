@@ -49,6 +49,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     player.start_play();
 
+    let cmd_tx_tick = cmd_tx_external.clone();
+    std::thread::spawn(move || loop {
+        let tx = cmd_tx_tick.lock();
+        tx.send(PlayerExternalCmd::Tick).ok();
+        // This drop is important to unlock the mutex
+        drop(tx);
+        std::thread::sleep(std::time::Duration::from_millis(500));
+    });
+
     std::thread::spawn(move || {
         let mut quit = false;
         while !quit {
@@ -69,7 +78,29 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     PlayerExternalCmd::SkipNext => todo!(),
                     PlayerExternalCmd::SpeedDown => todo!(),
                     PlayerExternalCmd::SpeedUp => todo!(),
-                    PlayerExternalCmd::Tick => todo!(),
+                    PlayerExternalCmd::Tick => {
+                        let handle_tick = async {
+                            if let Some((_, _, position, _)) = player.get_current_track().await {
+                                let mut p_tick = progress_tick.lock();
+                                if let Some(current_track_index) =
+                                    player.playlist.get_current_track_index()
+                                {
+                                    p_tick.current_track_index = current_track_index as u32;
+                                }
+                                p_tick.position = position / 1000;
+                                p_tick.duration = 120u32;
+                                // p_tick.duration = duration as u32;
+                                p_tick.status = player.playlist.status().as_u32();
+                                // p_tick.volume = player.volume();
+                                // p_tick.speed = player.speed();
+                                // p_tick.gapless = player.config.player_gapless;
+                                // info!("p_tick: {:?}", p_tick);
+                            }
+                        };
+                        let runtime =
+                            tokio::runtime::Runtime::new().expect("Failed to create Tokio runtime");
+                        runtime.block_on(handle_tick);
+                    }
                     PlayerExternalCmd::ToggleGapless => todo!(),
                     PlayerExternalCmd::TogglePause => {
                         info!("player toggled pause");

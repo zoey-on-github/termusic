@@ -34,6 +34,7 @@ use termusiclib::config::Settings;
 pub use termusiclib::types::*;
 // use termusicplayback::{PlayerCmd, Status};
 use termusicplayer::player::PlayerExternalCmd;
+use termusicplayer::playlist::Status;
 use tokio::sync::mpsc::{self, UnboundedReceiver};
 use tuirealm::application::PollStrategy;
 use tuirealm::{Application, Update};
@@ -162,37 +163,37 @@ impl UI {
         }
     }
 
-    // fn handle_status(&mut self, status: Status) {
-    //     match status {
-    //         Status::Running => match self.model.playlist.status() {
-    //             Status::Running => {}
-    //             Status::Stopped => {
-    //                 self.model.playlist.set_status(status);
-    //                 // This is to show the first album photo
-    //                 self.model.player_update_current_track_after();
-    //             }
-    //             Status::Paused => {
-    //                 self.model.playlist.set_status(status);
-    //             }
-    //         },
-    //         Status::Stopped => match self.model.playlist.status() {
-    //             Status::Running | Status::Paused => {
-    //                 self.model.playlist.set_status(status);
-    //                 // This is to clear the photo shown when stopped
-    //                 if self.model.playlist.is_empty() {
-    //                     self.model.player_update_current_track_after();
-    //                 }
-    //             }
-    //             Status::Stopped => {}
-    //         },
-    //         Status::Paused => match self.model.playlist.status() {
-    //             Status::Running | Status::Stopped => {
-    //                 self.model.playlist.set_status(status);
-    //             }
-    //             Status::Paused => {}
-    //         },
-    //     }
-    // }
+    fn handle_status(&mut self, status: Status) {
+        match status {
+            Status::Running => match self.model.playlist.status() {
+                Status::Running => {}
+                Status::Stopped => {
+                    self.model.playlist.set_status(status);
+                    // This is to show the first album photo
+                    self.model.player_update_current_track_after();
+                }
+                Status::Paused => {
+                    self.model.playlist.set_status(status);
+                }
+            },
+            Status::Stopped => match self.model.playlist.status() {
+                Status::Running | Status::Paused => {
+                    self.model.playlist.set_status(status);
+                    // This is to clear the photo shown when stopped
+                    if self.model.playlist.is_empty() {
+                        self.model.player_update_current_track_after();
+                    }
+                }
+                Status::Stopped => {}
+            },
+            Status::Paused => match self.model.playlist.status() {
+                Status::Running | Status::Stopped => {
+                    self.model.playlist.set_status(status);
+                }
+                Status::Paused => {}
+            },
+        }
+    }
 
     async fn run_playback(&mut self) -> Result<()> {
         if let Ok(cmd) = self.cmd_rx.try_recv() {
@@ -207,13 +208,14 @@ impl UI {
                     self.model.playlist.clear_current_track();
                 }
                 PlayerExternalCmd::GetProgress => {
-                    // let response = self.playback.get_progress().await?;
-                    // self.model.progress_update(
-                    //     i64::from(response.position),
-                    //     i64::from(response.duration),
-                    // );
-                    // self.handle_current_track_index(Some(response.current_track_index as usize));
-                    // self.handle_status(Status::from_u32(response.status));
+                    let response = self.playback.get_progress().await?;
+                    self.model.progress_update(
+                        i64::from(response.position),
+                        i64::from(response.duration),
+                    );
+                    eprintln!("response.position: {}", response.position);
+                    self.handle_current_track_index(Some(response.current_track_index as usize));
+                    self.handle_status(Status::from_u32(response.status));
                 }
                 PlayerExternalCmd::AboutToFinish
                 | PlayerExternalCmd::Eos

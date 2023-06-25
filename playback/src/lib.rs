@@ -147,14 +147,6 @@ impl GeneralPlayer {
         let player = rusty_backend::Player::new(config, cmd_tx.clone());
         let playlist = Playlist::new(config).unwrap_or_default();
 
-        let cmd_tx_tick = Arc::clone(&cmd_tx);
-        std::thread::spawn(move || loop {
-            let tx = cmd_tx_tick.lock();
-            tx.send(PlayerCmd::Tick).ok();
-            // This drop is important to unlock the mutex
-            drop(tx);
-            std::thread::sleep(std::time::Duration::from_millis(500));
-        });
         let db_path = get_app_config_path().expect("failed to get podcast db path.");
 
         let db_podcast = DBPod::connect(&db_path).expect("error connecting to podcast db.");
