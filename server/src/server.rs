@@ -101,6 +101,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     PlayerExternalCmd::SpeedDown => todo!(),
                     PlayerExternalCmd::SpeedUp => todo!(),
                     PlayerExternalCmd::Tick => {
+                        info!("TICK RECEIVED!");
                         let handle_tick = async {
                             if let Some((_, _, position, _)) = player.get_current_track().await {
                                 let mut p_tick = progress_tick.lock();
